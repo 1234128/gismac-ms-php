@@ -2,13 +2,12 @@
 -- USE THIS IF YOU CAN'T CREATE NEW DATABASES
 
 -- IMPORTANT: Replace 'your_database_name' with your actual database name
--- Example: USE gismacco_gismac;
+-- Example: USE gismacco_wp858 ;
 
 -- Comment out or remove this line if database already exists:
--- CREATE DATABASE IF NOT EXISTS gismac_ms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Use your existing database (CHANGE THIS!)
-USE your_database_name;
+USE your_database_name;gismacco_wp858
 
 -- ============================================
 -- USERS TABLE
