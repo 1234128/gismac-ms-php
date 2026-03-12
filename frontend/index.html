@@ -1,1 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="js/config.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gismac MS - Guard Information Security Management & Control System">
+    <title>Gismac MS - Secure Login</title><script src="js/config.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        :root {
+            --gismac-navy: #1a2744;
+            --gismac-navy-light: #2d3e5f;
+            --gismac-navy-dark: #0f172a;
+            --gismac-gold: #f4c430;
+        }
+        
+        .login-bg {
+            background: linear-gradient(135deg, var(--gismac-navy-dark) 0%, var(--gismac-navy) 50%, var(--gismac-navy-light) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(244, 196, 48, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(244, 196, 48, 0.05) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        .particle {
+            position: absolute;
+            background: var(--gismac-gold);
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 15s infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.1; }
+            90% { opacity: 0.1; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gismac-navy) 0%, var(--gismac-navy-light) 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(26, 39, 68, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .btn-loading {
+            color: transparent !important;
+            position: relative;
+        }
+        
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin-left: -10px;
+            margin-top: -10px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spinner 0.8s linear infinite;
+        }
+        
+        @keyframes spinner {
+            to { transform: rotate(360deg); }
+        }
+        
+        .toast {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            color: white;
+            font-weight: 500;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 50;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast-success { background: #10b981; }
+        .toast-error { background: #ef4444; }
+        .toast-warning { background: #f4c430; color: #1a2744; }
+        
+        .connection-status {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 50;
+            transition: all 0.3s ease;
+        }
+        
+        .connection-status.online {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .connection-status.offline {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .connection-status.checking {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .input-error {
+            border-color: #ef4444 !important;
+            background: #fef2f2 !important;
+        }
+        
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+    </style>
+</head>
+<body class="login-bg min-h-screen flex flex-col">
+
+    <div class="particle" style="width: 4px; height: 4px; left: 10%; animation-delay: 0s;"></div>
+    <div class="particle" style="width: 6px; height: 6px; left: 20%; animation-delay: 2s;"></div>
+    <div class="particle" style="width: 3px; height: 3px; left: 30%; animation-delay: 4s;"></div>
+    <div class="particle" style="width: 5px; height: 5px; left: 50%; animation-delay: 1s;"></div>
+    <div class="particle" style="width: 4px; height: 4px; left: 70%; animation-delay: 3s;"></div>
+    <div class="particle" style="width: 6px; height: 6px; left: 80%; animation-delay: 5s;"></div>
+    <div class="particle" style="width: 3px; height: 3px; left: 90%; animation-delay: 2.5s;"></div>
+
+    <div id="connection-status" class="connection-status checking">
+        <span class="w-2 h-2 rounded-full bg-current animate-pulse"></span>
+        <span id="status-text">Checking connection...</span>
+    </div>
+
+    <div id="toast" class="toast" role="alert"></div>
+
+    <main class="flex-1 flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-md rounded-2xl p-8 relative">
+            
+            <div id="connection-error" class="hidden mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-exclamation-triangle text-red-500 mt-0.5"></i>
+                    <div class="flex-1">
+                        <h3 class="text-sm font-semibold text-red-800">Connection Failed</h3>
+                        <p class="text-xs text-red-600 mt-1">Unable to connect to Gismac servers.</p>
+                        <button onclick="retryConnection()" class="mt-3 px-3 py-2 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
+                            <i class="fas fa-redo mr-1"></i> Retry Connection
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center gap-2 mb-6">
+                <div class="flex items-center gap-2 text-xs font-medium">
+                    <i id="lock-icon" class="fas fa-lock text-slate-400"></i>
+                    <span id="connection-label" class="text-slate-500">Initializing...</span>
+                </div>
+                <div id="security-info" class="hidden w-full">
+                    <div class="flex items-center justify-center gap-4 text-xs bg-slate-50 rounded-lg px-4 py-2">
+                        <div class="flex items-center gap-1.5 text-slate-600">
+                            <i class="fas fa-network-wired text-[#1a2744]"></i>
+                            <span id="ip-display">***.***.***.***</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-8">
+                <div class="relative w-24 h-24 mx-auto mb-4">
+                    <div class="absolute inset-0 bg-gradient-to-br from-[#1a2744] to-[#2d3e5f] rounded-full flex items-center justify-center border-2 border-[#f4c430] shadow-xl">
+                        <div class="text-center z-10">
+                            <div class="text-[#f4c430] font-bold text-[10px] tracking-widest mb-0.5">GOS</div>
+                            <div class="text-3xl">🦁</div>
+                            <div class="text-[#f4c430] font-bold text-[8px] tracking-wider mt-0.5">GISMAC</div>
+                        </div>
+                    </div>
+                </div>
+                <h1 class="text-2xl font-bold text-[#1a2744] mb-1">Gismac MS</h1>
+                <p class="text-sm text-slate-500">Guard Information Security Management</p>
+                <div class="mt-2 inline-flex items-center gap-1 px-3 py-1 bg-[#f4c430]/10 rounded-full">
+                    <span class="w-1.5 h-1.5 bg-[#f4c430] rounded-full animate-pulse"></span>
+                    <span class="text-xs font-semibold text-[#1a2744] tracking-wide">DELIVER | EMPOWER | EXCEED</span>
+                </div>
+            </div>
+
+            <form id="loginForm" class="space-y-5">
+                <input type="hidden" id="csrfToken" name="csrfToken">
+                
+                <div>
+                    <label for="role" class="block text-sm font-medium text-[#1a2744] mb-2">
+                        Select Your Role <span class="text-red-500">*</span>
+                    </label>
+                    <select id="role" name="role" required
+                        class="w-full px-4 py-3 rounded-lg border border-slate-300 bg-slate-50 text-[#1a2744] focus:ring-2 focus:ring-[#f4c430] focus:border-[#f4c430] outline-none appearance-none cursor-pointer">
+                        <option value="" disabled selected>Choose your role...</option>
+                        <option value="admin">Administrator / HOD (Tier 1)</option>
+                        <option value="hr">HR Manager (Tier 2)</option>
+                        <option value="finance">Finance Officer (Tier 3)</option>
+                        <option value="store">Store Manager (Tier 3)</option>
+                        <option value="supervisor">Site Supervisor (Tier 4)</option>
+                        <option value="guard">Security Guard (Tier 5)</option>
+                    </select>
+                    <p id="role-error" class="hidden mt-1 text-xs text-red-500 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span>Please select a role</span>
+                    </p>
+                </div>
+
+                <div class="relative">
+                    <input type="email" id="email" name="email" required placeholder=" "
+                        class="input-field w-full px-4 py-3 rounded-lg border border-slate-300 text-[#1a2744] outline-none peer"
+                        autocomplete="email">
+                    <label for="email" class="absolute left-4 top-3.5 text-slate-500 text-sm transition-all peer-focus:-top-2.5 peer-focus:text-xs peer-focus:bg-white peer-focus:px-1 peer-focus:text-[#1a2744] peer-[:not(:placeholder-shown)]:-top-2.5 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1">
+                        Email Address
+                    </label>
+                    <p id="email-error" class="hidden mt-1 text-xs text-red-500 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span>Please enter a valid email</span>
+                    </p>
+                </div>
+
+                <div class="relative">
+                    <input type="password" id="password" name="password" required placeholder=" " minlength="8"
+                        class="input-field w-full px-4 py-3 rounded-lg border border-slate-300 text-[#1a2744] outline-none pr-12 peer"
+                        autocomplete="current-password">
+                    <label for="password" class="absolute left-4 top-3.5 text-slate-500 text-sm transition-all peer-focus:-top-2.5 peer-focus:text-xs peer-focus:bg-white peer-focus:px-1 peer-focus:text-[#1a2744] peer-[:not(:placeholder-shown)]:-top-2.5 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1">
+                        Password
+                    </label>
+                    <button type="button" id="togglePassword"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1a2744] transition-colors">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <p id="password-error" class="hidden mt-1 text-xs text-red-500 flex items-center gap-1">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span>Password must be at least 8 characters</span>
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="remember" name="remember"
+                            class="w-4 h-4 rounded border-slate-300 text-[#f4c430] focus:ring-[#f4c430]">
+                        <span class="text-sm text-slate-600">Remember me</span>
+                    </label>
+                    <a href="#" id="forgotPassword" class="text-sm font-medium text-[#1a2744] hover:text-[#f4c430] transition-colors">
+                        Forgot password?
+                    </a>
+                    <!-- Add this inside the login form, before the submit button -->
+<div style="text-align: right; margin-bottom: 20px;">
+    <a href="reset-password.html" style="color: #667eea; text-decoration: none; font-size: 14px;">
+        Forgot password?
+    </a>
+</div>
+                </div>
+
+                <button type="submit" id="submitBtn"
+                    class="btn-primary w-full py-3.5 rounded-lg text-white font-semibold shadow-lg flex items-center justify-center gap-2">
+                    <span>Sign In to Dashboard</span>
+                    <i class="fas fa-arrow-right text-sm"></i>
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-slate-200 text-center">
+                <p class="text-xs text-slate-400">© 2026 Gismac Security Limited</p>
+                <p class="text-xs text-slate-400 mt-1">www.gismac.co.ke | +254 791 822 164</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+       // Use centralized config - NO hardcoded URLs!
+async function login(email, password, role) {
+    const response = await fetch(`${CONFIG.API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+        // Save token
+        localStorage.setItem('token', data.token || data.data.tokens.accessToken);
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+        
+        // Redirect based on role
+        window.location.href = 'admin.html';
+    } else {
+        alert(data.error?.message || 'Login failed');
+    }
+    
+    return data;
+}
+
+// Security context (if you have this)
+async function loadSecurityContext() {
+    try {
+        const response = await fetch(`${CONFIG.API_URL}/auth/security-context`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Display security info
+            document.getElementById('ipDisplay').textContent = data.data.ipDisplay;
+        }
+    } catch (error) {
+        console.error('Security context error:', error);
+    }
+}
+
+// Call on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadSecurityContext();
+    
+    // Check if already logged in
+    const token = localStorage.getItem('token');
+    if (token) {
+        window.location.href = 'admin.html';
+    }
+});
+    })(),
+    REQUEST_TIMEOUT: 10000,
+    MAX_RETRIES: 3,
+    RETRY_DELAY: 2000
+};
+
+// Debug: log the URL
+console.log('🔌 Connecting to API:', CONFIG.API_BASE_URL);
+                }
+                
+                // Production with same origin (nginx proxy)
+                return '/api/v1';
+            })(),
+            REQUEST_TIMEOUT: 10000,
+            MAX_RETRIES: 3,
+            RETRY_DELAY: 2000
+        };
+
+        console.log('API Base URL:', CONFIG.API_BASE_URL);
+
+        const state = {
+            isOnline: navigator.onLine,
+            apiAvailable: false,
+            retryAttempt: 0,
+            csrfToken: null
+        };
+
+        const UI = {
+            elements: {
+                status: document.getElementById('connection-status'),
+                statusText: document.getElementById('status-text'),
+                errorAlert: document.getElementById('connection-error'),
+                lockIcon: document.getElementById('lock-icon'),
+                connectionLabel: document.getElementById('connection-label'),
+                securityInfo: document.getElementById('security-info'),
+                submitBtn: document.getElementById('submitBtn'),
+                toast: document.getElementById('toast')
+            },
+
+            setStatus(status, message) {
+                const { status: el, statusText } = this.elements;
+                el.classList.remove('online', 'offline', 'checking');
+                el.classList.add(status);
+                const messages = {
+                    online: 'Connected',
+                    offline: 'Offline',
+                    checking: 'Checking connection...'
+                };
+                statusText.textContent = message || messages[status];
+            },
+
+            showConnectionError() {
+                this.elements.errorAlert.classList.remove('hidden');
+                this.setStatus('offline');
+            },
+
+            hideConnectionError() {
+                this.elements.errorAlert.classList.add('hidden');
+            },
+
+            showToast(message, type = 'error') {
+                const toast = this.elements.toast;
+                const icon = type === 'success' ? 'check-circle' : 
+                            type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle';
+                toast.innerHTML = `<i class="fas fa-${icon}"></i><span>${message}</span>`;
+                toast.className = `toast toast-${type} show`;
+                setTimeout(() => toast.classList.remove('show'), 5000);
+            },
+
+            setLoading(loading) {
+                const btn = this.elements.submitBtn;
+                if (loading) {
+                    btn.classList.add('btn-loading');
+                    btn.disabled = true;
+                } else {
+                    btn.classList.remove('btn-loading');
+                    btn.disabled = false;
+                }
+            },
+
+            showFieldError(fieldId, show) {
+                const field = document.getElementById(fieldId);
+                const errorEl = document.getElementById(`${fieldId}-error`);
+                if (show) {
+                    field.classList.add('input-error', 'shake');
+                    errorEl.classList.remove('hidden');
+                    setTimeout(() => field.classList.remove('shake'), 500);
+                } else {
+                    field.classList.remove('input-error');
+                    errorEl.classList.add('hidden');
+                }
+            },
+
+            clearErrors() {
+                document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+                document.querySelectorAll('[id$="-error"]').forEach(el => el.classList.add('hidden'));
+            }
+        };
+
+        class ApiClient {
+            constructor(baseURL) {
+                this.baseURL = baseURL;
+            }
+
+            async request(endpoint, options = {}, retryCount = 0) {
+                const url = `${this.baseURL}${endpoint}`;
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+
+                try {
+                    const response = await fetch(url, {
+                        ...options,
+                        signal: controller.signal,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            ...options.headers
+                        }
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                        const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+                        throw new Error(error.error?.message || `HTTP ${response.status}`);
+                    }
+
+                    return await response.json();
+
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    
+                    if (error.name === 'AbortError') {
+                        throw new Error('Request timeout');
+                    }
+                    
+                    if (!navigator.onLine) {
+                        throw new Error('No internet connection');
+                    }
+
+                    if (retryCount < CONFIG.MAX_RETRIES) {
+                        await new Promise(r => setTimeout(r, CONFIG.RETRY_DELAY));
+                        return this.request(endpoint, options, retryCount + 1);
+                    }
+
+                    throw error;
+                }
+            }
+
+            get(endpoint) {
+                return this.request(endpoint, { method: 'GET' });
+            }
+
+            post(endpoint, data) {
+                return this.request(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+            }
+        }
+
+        const api = new ApiClient(CONFIG.API_BASE_URL);
+
+        async function initializeConnection() {
+            UI.setStatus('checking');
+            UI.hideConnectionError();
+
+            try {
+                const health = await api.get('/health');
+                state.apiAvailable = true;
+                UI.setStatus('online');
+                
+                const ctx = await api.get('/auth/security-context');
+                if (ctx.success) {
+                    state.csrfToken = ctx.data.csrfToken;
+                    document.getElementById('csrfToken').value = state.csrfToken;
+                    document.getElementById('ip-display').textContent = ctx.data.ipDisplay || '***.***.***.***';
+                    document.getElementById('security-info').classList.remove('hidden');
+                    UI.elements.lockIcon.className = 'fas fa-lock text-green-500';
+                    UI.elements.connectionLabel.innerHTML = '<span class="text-green-600 font-medium">Secure Connection</span>';
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Connection failed:', error);
+                state.apiAvailable = false;
+                UI.showConnectionError();
+                return false;
+            }
+        }
+
+        function retryConnection() {
+            UI.setStatus('checking');
+            initializeConnection();
+        }
+
+        async function handleLogin(formData) {
+            UI.setLoading(true);
+            UI.clearErrors();
+
+            const errors = [];
+            if (!formData.role) {
+                errors.push({ field: 'role' });
+                UI.showFieldError('role', true);
+            }
+            if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+                errors.push({ field: 'email' });
+                UI.showFieldError('email', true);
+            }
+            if (!formData.password || formData.password.length < 8) {
+                errors.push({ field: 'password' });
+                UI.showFieldError('password', true);
+            }
+
+            if (errors.length > 0) {
+                UI.setLoading(false);
+                return;
+            }
+
+            try {
+                const response = await api.post('/auth/login', {
+                    email: formData.email,
+                    password: formData.password,
+                    role: formData.role,
+                    csrfToken: state.csrfToken,
+                    rememberMe: formData.remember
+                });
+
+                if (response.success) {
+                    UI.showToast(`Welcome, ${response.data.user.firstName}!`, 'success');
+                    
+                    sessionStorage.setItem('gismac_session', JSON.stringify({
+                        user: response.data.user,
+                        token: response.data.tokens?.accessToken,
+                        expiresAt: Date.now() + 24 * 60 * 60 * 1000
+                    }));
+
+                    setTimeout(() => {
+                        // For demo, show success message
+                        const roleDisplay = response.data.user.role.replace('_', ' ').toUpperCase();
+                        alert(`✅ LOGIN SUCCESSFUL!\n\nWelcome ${response.data.user.firstName} ${response.data.user.lastName}\nRole: ${roleDisplay}\nTier: ${response.data.user.tier}\n\nIn production, you would be redirected to the ${roleDisplay} dashboard.`);
+                        
+                        // Actual redirect would be:
+                        // window.location.href = getDashboardUrl(response.data.user.role);
+                    }, 1000);
+                }
+            } catch (error) {
+                UI.setLoading(false);
+                UI.showToast(error.message || 'Login failed. Please check your credentials.', 'error');
+            }
+        }
+
+        function getDashboardUrl(role) {
+            const paths = {
+                administrator: '/admin/dashboard',
+                hr_manager: '/hr/dashboard',
+                finance_officer: '/finance/dashboard',
+                store_manager: '/store/dashboard',
+                site_supervisor: '/supervisor/dashboard',
+                security_guard: '/guard/dashboard'
+            };
+            return paths[role] || '/dashboard';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeConnection();
+
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                handleLogin({
+                    email: document.getElementById('email').value.trim(),
+                    password: document.getElementById('password').value,
+                    role: document.getElementById('role').value,
+                    remember: document.getElementById('remember').checked
+                });
+            });
+
+            document.getElementById('togglePassword').addEventListener('click', function() {
+                const input = document.getElementById('password');
+                const isVisible = input.type === 'text';
+                input.type = isVisible ? 'password' : 'text';
+                this.innerHTML = isVisible ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+            });
+
+            document.getElementById('forgotPassword').addEventListener('click', (e) => {
+                e.preventDefault();
+                UI.showToast('Please contact HR to reset your password', 'warning');
+            });
+
+            window.addEventListener('online', () => {
+                state.isOnline = true;
+                if (!state.apiAvailable) retryConnection();
+            });
+
+            window.addEventListener('offline', () => {
+                state.isOnline = false;
+                UI.setStatus('offline');
+            });
+        });
+    </script>
+</body>
+</html>
 
