@@ -1,0 +1,245 @@
+-- Gismac MS Database Schema for MySQL
+-- Run this in phpMyAdmin or MySQL CLI
+
+CREATE DATABASE IF NOT EXISTS gismac_ms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE gismac_ms;
+
+-- Users Table
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    role ENUM('administrator', 'hr_manager', 'finance_officer', 'site_supervisor', 'security_guard', 'super_admin') DEFAULT 'security_guard',
+    tier INT DEFAULT 5 CHECK (tier BETWEEN 1 AND 5),
+    department VARCHAR(100) DEFAULT 'Operations',
+    employee_id VARCHAR(50) UNIQUE,
+    phone VARCHAR(20),
+    is_active BOOLEAN DEFAULT TRUE,
+    last_login TIMESTAMP NULL,
+    mfa_enabled BOOLEAN DEFAULT FALSE,
+    mfa_secret VARCHAR(255),
+    password_reset_token VARCHAR(255),
+    password_reset_expires TIMESTAMP,
+    password_changed_at TIMESTAMP,
+    login_attempts INT DEFAULT 0,
+    lock_until TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_email (email),
+    INDEX idx_employee_id (employee_id),
+    INDEX idx_role (role)
+) ENGINE=InnoDB;
+
+-- Privileges Table (separate for flexibility)
+CREATE TABLE user_privileges (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    resource VARCHAR(50) NOT NULL, -- 'userManagement', 'tierManagement', 'records', 'system'
+    action VARCHAR(50) NOT NULL,   -- 'add', 'edit', 'delete', 'view', 'configure'
+    allowed BOOLEAN DEFAULT FALSE,
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_privilege (user_id, resource, action)
+) ENGINE=InnoDB;
+
+-- Records Table
+CREATE TABLE records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    type ENUM('incident', 'patrol', 'visitor', 'asset', 'employee', 'shift', 'training', 'equipment', 'emergency', 'maintenance', 'other') NOT NULL,
+    status ENUM('open', 'in_progress', 'resolved', 'closed', 'archived', 'deleted') DEFAULT 'open',
+    priority ENUM('low', 'medium', 'high', 'critical') DEFAULT 'medium',
+    
+    -- Location
+    location_site VARCHAR(100),
+    location_building VARCHAR(100),
+    location_floor VARCHAR(50),
+    location_room VARCHAR(50),
+    location_lat DECIMAL(10, 8),
+    location_lng DECIMAL(11, 8),
+    
+    occurred_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP NULL,
+    
+    created_by INT NOT NULL,
+    assigned_to INT NULL,
+    
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP NULL,
+    deleted_by INT NULL,
+    deletion_reason TEXT,
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    FOREIGN KEY (assigned_to) REFERENCES users(id),
+    FOREIGN KEY (deleted_by) REFERENCES users(id),
+    
+    INDEX idx_type_status (type, status),
+    INDEX idx_created_by (created_by),
+    INDEX idx_occurred_at (occurred_at)
+) ENGINE=InnoDB;
+
+-- Record Updates (comments/activity)
+CREATE TABLE record_updates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    record_id INT NOT NULL,
+    user_id INT NOT NULL,
+    message TEXT NOT NULL,
+    status_change VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB;
+
+-- Incident Details
+CREATE TABLE incident_details (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    record_id INT NOT NULL,
+    category ENUM('theft', 'vandalism', 'unauthorized_access', 'safety_hazard', 'violence', 'fire', 'medical', 'other'),
+    severity ENUM('minor', 'moderate', 'major', 'severe'),
+    injuries BOOLEAN DEFAULT FALSE,
+    property_damage BOOLEAN DEFAULT FALSE,
+    police_report_number VARCHAR(100),
+    insurance_claim BOOLEAN DEFAULT FALSE,
+    
+    FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Patrol Details
+CREATE TABLE patrol_details (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    record_id INT NOT NULL,
+    route VARCHAR(255),
+    start_time TIMESTAMP NULL,
+    end_time TIMESTAMP NULL,
+    distance DECIMAL(10, 2),
+    anomalies_found BOOLEAN DEFAULT FALSE,
+    
+    FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Patrol Checkpoints
+CREATE TABLE patrol_checkpoints (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    patrol_id INT NOT NULL,
+    name VARCHAR(100),
+    checked_at TIMESTAMP,
+    status ENUM('normal', 'abnormal', 'issue_found'),
+    notes TEXT,
+    
+    FOREIGN KEY (patrol_id) REFERENCES patrol_details(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Visitor Details
+CREATE TABLE visitor_details (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    record_id INT NOT NULL,
+    visitor_name VARCHAR(100),
+    visitor_id VARCHAR(100),
+    visitor_company VARCHAR(100),
+    host_name VARCHAR(100),
+    host_department VARCHAR(100),
+    purpose VARCHAR(255),
+    entry_time TIMESTAMP,
+    exit_time TIMESTAMP,
+    vehicle_number VARCHAR(50),
+    badge_number VARCHAR(50),
+    
+    FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Visitor Belongings
+CREATE TABLE visitor_belongings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    visitor_detail_id INT NOT NULL,
+    item VARCHAR(100),
+    
+    FOREIGN KEY (visitor_detail_id) REFERENCES visitor_details(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Asset Details
+CREATE TABLE asset_details (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    record_id INT NOT NULL,
+    asset_tag VARCHAR(100),
+    asset_type ENUM('electronics', 'furniture', 'vehicle', 'equipment', 'document', 'key', 'other'),
+    asset_name VARCHAR(100),
+    serial_number VARCHAR(100),
+    value DECIMAL(12, 2),
+    condition_status ENUM('excellent', 'good', 'fair', 'poor', 'damaged', 'lost'),
+    last_seen TIMESTAMP,
+    last_location VARCHAR(255),
+    
+    FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Attachments
+CREATE TABLE attachments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    record_id INT NOT NULL,
+    filename VARCHAR(255),
+    file_path VARCHAR(500),
+    mimetype VARCHAR(100),
+    file_size INT,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Involved Persons
+CREATE TABLE involved_persons (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    record_id INT NOT NULL,
+    name VARCHAR(100),
+    contact VARCHAR(100),
+    role VARCHAR(100),
+    statement TEXT,
+    
+    FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Insert Default Super Admin
+INSERT INTO users (email, password, first_name, last_name, role, tier, department, is_active) VALUES
+('admin@gismac-ms.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'super_admin', 1, 'IT Administration', TRUE);
+
+-- Password is: password (change this!)
+
+-- Insert default privileges for super admin
+INSERT INTO user_privileges (user_id, resource, action, allowed) VALUES
+(1, 'userManagement', 'add', TRUE),
+(1, 'userManagement', 'edit', TRUE),
+(1, 'userManagement', 'delete', TRUE),
+(1, 'userManagement', 'view', TRUE),
+(1, 'tierManagement', 'configure', TRUE),
+(1, 'tierManagement', 'delete', TRUE),
+(1, 'tierManagement', 'add', TRUE),
+(1, 'records', 'delete', TRUE),
+(1, 'records', 'edit', TRUE),
+(1, 'records', 'view', TRUE),
+(1, 'records', 'add', TRUE),
+(1, 'system', 'settings', TRUE),
+(1, 'system', 'backup', TRUE),
+(1, 'system', 'restore', TRUE);
+
+-- Insert sample users (optional)
+INSERT INTO users (email, password, first_name, last_name, role, tier, department, is_active) VALUES
+('hr@gismac.co.ke', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'HR', 'Manager', 'hr_manager', 2, 'Human Resources', TRUE),
+('guard@gismac.co.ke', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Security', 'Guard', 'security_guard', 5, 'Operations', TRUE);
+
+-- Add privileges for sample users
+INSERT INTO user_privileges (user_id, resource, action, allowed) VALUES
+(2, 'userManagement', 'add', TRUE),
+(2, 'userManagement', 'edit', TRUE),
+(2, 'userManagement', 'view', TRUE),
+(2, 'records', 'add', TRUE),
+(2, 'records', 'edit', TRUE),
+(2, 'records', 'view', TRUE),
+(3, 'records', 'add', TRUE),
+(3, 'records', 'view', TRUE);
