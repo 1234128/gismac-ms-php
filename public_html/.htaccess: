@@ -1,0 +1,16 @@
+RewriteEngine On
+
+# Serve frontend for root
+DirectoryIndex frontend/index.html
+
+# API routing to backend
+RewriteRule ^api/(.*)$ backend/index.php [QSA,L]
+
+# Serve static files directly
+RewriteCond %{REQUEST_URI} ^/frontend/ [NC]
+RewriteRule ^frontend/(.*)$ frontend/$1 [L]
+
+# Fallback to frontend
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ frontend/$1 [L]
