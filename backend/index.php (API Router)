@@ -1,0 +1,57 @@
+<?php
+// Main API Router
+
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+require_once 'config/database.php';
+require_once 'includes/functions.php';
+require_once 'includes/jwt.php';
+
+// Get request path
+$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$path = str_replace('/backend/', '/', $path); // Adjust for subdirectory
+$path = trim($path, '/');
+
+// Route to appropriate endpoint
+$segments = explode('/', $path);
+
+// API Version check
+if ($segments[0] !== 'api' || $segments[1] !== 'v1') {
+    jsonResponse(false, null, 'Invalid API version', 404);
+}
+
+$resource = $segments[2] ?? '';
+$action = $segments[3] ?? '';
+
+try {
+    switch ($resource) {
+        case 'health':
+            require_once 'api/health.php';
+            break;
+            
+        case 'auth':
+            require_once 'api/auth.php';
+            break;
+            
+        case 'users':
+            require_once 'api/users.php';
+            break;
+            
+        case 'records':
+            require_once 'api/records.php';
+            break;
+            
+        default:
+            jsonResponse(false, null, 'Endpoint not found', 404);
+    }
+} catch (Exception $e) {
+    jsonResponse(false, null, $e->getMessage(), 500);
+}
+?>
