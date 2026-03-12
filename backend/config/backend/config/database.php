@@ -4,7 +4,7 @@
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'gismacco_wp858');
 define('DB_USER', 'gismacco_wp858');  // Usually same as DB name, or check cPanel
-define('DB_PASS', 'your_mysql_password_here');  // Get from cPanel → MySQL Databases
+define('DB_PASS', 'Gismac@2026');  // Get from cPanel → MySQL Databases
 define('DB_CHARSET', 'utf8mb4');
 
 class Database {
