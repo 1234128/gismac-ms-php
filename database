@@ -1,13 +1,8 @@
 -- Gismac MS Database Schema for MySQL
 -- USE THIS IF YOU CAN'T CREATE NEW DATABASES
 
--- IMPORTANT: Replace 'your_database_name' with your actual database name
--- Example: USE gismacco_wp858 ;
-
--- Comment out or remove this line if database already exists:
-
--- Use your existing database (CHANGE THIS!)
-USE your_database_name;gismacco_wp858
+-- Use your existing HostPinnacle database
+USE gismacco_wp858;
 
 -- ============================================
 -- USERS TABLE
@@ -68,7 +63,6 @@ CREATE TABLE IF NOT EXISTS records (
     status ENUM('open', 'in_progress', 'resolved', 'closed', 'archived', 'deleted') DEFAULT 'open',
     priority ENUM('low', 'medium', 'high', 'critical') DEFAULT 'medium',
     
-    -- Location fields
     location_site VARCHAR(100),
     location_building VARCHAR(100),
     location_floor VARCHAR(50),
