@@ -1,1 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head> <script src="js/config.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gismac MS - Admin Panel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 2px 0 20px rgba(0,0,0,0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .logo {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+        }
+        .logo h1 { color: #667eea; font-size: 24px; margin-bottom: 5px; }
+        .logo p { color: #888; font-size: 12px; }
+        .nav-menu { list-style: none; flex: 1; }
+        .nav-item { margin-bottom: 10px; }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: #555;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .nav-link:hover, .nav-link.active {
+            background: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
+        .nav-link i { margin-right: 15px; width: 20px; text-align: center; }
+        .user-info {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-top: auto;
+        }
+        .user-info h4 { color: #333; margin-bottom: 5px; }
+        .user-info p { color: #888; font-size: 12px; }
+        .logout-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .logout-btn:hover { background: #c82333; }
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h2 { color: #333; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card i { font-size: 40px; color: #667eea; margin-bottom: 15px; }
+        .stat-card h3 { font-size: 32px; color: #333; margin-bottom: 5px; }
+        .stat-card p { color: #888; }
+        .content-section {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover { background: #c82333; }
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        .btn-sm { padding: 8px 15px; font-size: 12px; }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .data-table th, .data-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        .data-table tr:hover { background: #f8f9fa; }
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #888;
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-select {
+            padding: 10px 15px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            background: white;
+            min-width: 150px;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                z-index: 100;
+                flex-direction: row;
+                padding: 10px;
+            }
+            .nav-menu { display: flex; overflow-x: auto; }
+            .nav-item { margin-bottom: 0; margin-right: 10px; }
+            .main-content { padding-bottom: 100px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h1><i class="fas fa-shield-alt"></i> GISMAC MS</h1>
+                <p>Guard Information Security</p>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link active" onclick="showSection('dashboard')">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('users')">
+                        <i class="fas fa-users"></i> User Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('records')">
+                        <i class="fas fa-clipboard-list"></i> Records
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('incidents')">
+                        <i class="fas fa-exclamation-triangle"></i> Incidents
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('patrols')">
+                        <i class="fas fa-walking"></i> Patrols
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('visitors')">
+                        <i class="fas fa-id-card"></i> Visitors
+                    </a>
+                </li>
+            </ul>
+            <div class="user-info">
+                <h4 id="currentUserName">Loading...</h4>
+                <p id="currentUserRole">Loading...</p>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h2 id="pageTitle">Dashboard</h2>
+                <div id="alerts"></div>
+            </div>
+
+            <section id="dashboard" class="content-section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <h3 id="totalUsers">0</h3>
+                        <p>Total Users</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3 id="totalRecords">0</h3>
+                        <p>Total Records</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3 id="openIncidents">0</h3>
+                        <p>Open Incidents</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-check-circle"></i>
+                        <h3 id="resolvedToday">0</h3>
+                        <p>Resolved Today</p>
+                    </div>
+                </div>
+                <div class="section-header">
+                    <h3>Recent Activity</h3>
+                </div>
+                <div id="recentActivity"><p>Loading...</p></div>
+            </section>
+
+            <section id="users" class="content-section">
+                <div class="section-header">
+                    <h3>User Management</h3>
+                    <button class="btn btn-primary" onclick="openUserModal()">
+                        <i class="fas fa-plus"></i> Add User
+                    </button>
+                </div>
+                <div class="filters">
+                    <select class="filter-select" id="userRoleFilter" onchange="loadUsers()">
+                        <option value="">All Roles</option>
+                        <option value="super_admin">Super Admin</option>
+                        <option value="administrator">Administrator</option>
+                        <option value="hr_manager">HR Manager</option>
+                        <option value="finance_officer">Finance Officer</option>
+                        <option value="site_supervisor">Site Supervisor</option>
+                        <option value="security_guard">Security Guard</option>
+                    </select>
+                    <button class="btn btn-danger btn-sm" onclick="deleteAllUsers()">
+                        <i class="fas fa-trash"></i> Delete All Users
+                    </button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Employee ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Tier</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody"></tbody>
+                </table>
+            </section>
+
+            <section id="records" class="content-section">
+                <div class="section-header">
+                    <h3>All Records</h3>
+                    <button class="btn btn-primary" onclick="openRecordModal()">
+                        <i class="fas fa-plus"></i> Add Record
+                    </button>
+                </div>
+                <div class="filters">
+                    <select class="filter-select" id="recordTypeFilter" onchange="loadRecords()">
+                        <option value="">All Types</option>
+                        <option value="incident">Incident</option>
+                        <option value="patrol">Patrol</option>
+                        <option value="visitor">Visitor</option>
+                        <option value="asset">Asset</option>
+                        <option value="employee">Employee</option>
+                        <option value="shift">Shift</option>
+                        <option value="training">Training</option>
+                    </select>
+                    <select class="filter-select" id="recordStatusFilter" onchange="loadRecords()">
+                        <option value="">All Status</option>
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Created By</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordsTableBody"></tbody>
+                </table>
+            </section>
+
+            <section id="incidents" class="content-section">
+                <div class="section-header">
+                    <h3>Incident Management</h3>
+                    <button class="btn btn-primary" onclick="openRecordModal('incident')">
+                        <i class="fas fa-plus"></i> Report Incident
+                    </button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Incident ID</th>
+                            <th>Category</th>
+                            <th>Severity</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incidentsTableBody"></tbody>
+                </table>
+            </section>
+
+            <section id="patrols" class="content-section">
+                <div class="section-header">
+                    <h3>Patrol Management</h3>
+                    <button class="btn btn-primary" onclick="openRecordModal('patrol')">
+                        <i class="fas fa-plus"></i> Log Patrol
+                    </button>
+                </div>
+                <div id="patrolsContent"></div>
+            </section>
+
+            <section id="visitors" class="content-section">
+                <div class="section-header">
+                    <h3>Visitor Management</h3>
+                    <button class="btn btn-primary" onclick="openRecordModal('visitor')">
+                        <i class="fas fa-plus"></i> Register Visitor
+                    </button>
+                </div>
+                <div id="visitorsContent"></div>
+            </section>
+        </main>
+    </div>
+
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="userModalTitle">Add New User</h3>
+                <button class="close-btn" onclick="closeUserModal()">&times;</button>
+            </div>
+            <form id="userForm" onsubmit="saveUser(event)">
+                <input type="hidden" id="userId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" class="form-control" id="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" class="form-control" id="lastName" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" class="form-control" id="email" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select class="form-control" id="role" required onchange="updateTier()">
+                            <option value="security_guard">Security Guard</option>
+                            <option value="site_supervisor">Site Supervisor</option>
+                            <option value="finance_officer">Finance Officer</option>
+                            <option value="hr_manager">HR Manager</option>
+                            <option value="administrator">Administrator</option>
+                            <option value="super_admin">Super Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tier</label>
+                        <select class="form-control" id="tier" required>
+                            <option value="5">Tier 5</option>
+                            <option value="4">Tier 4</option>
+                            <option value="3">Tier 3</option>
+                            <option value="2">Tier 2</option>
+                            <option value="1">Tier 1</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Department</label>
+                    <input type="text" class="form-control" id="department" value="Operations">
+                </div>
+                <div class="form-group">
+                    <label>Password <small>(leave blank to keep unchanged when editing)</small></label>
+                    <input type="password" class="form-control" id="password" minlength="8">
+                </div>
+                <h4 style="margin: 20px 0 10px; color: #555;">Privileges</h4>
+                <div style="margin-bottom: 15px;">
+                    <h5>User Management</h5>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="priv_user_add"> Add
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="priv_user_edit"> Edit
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="priv_user_delete"> Delete
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="priv_user_view" checked> View
+                        </label>
+                    </div>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <h5>Records Management</h5>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="priv_rec_add"> Add
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="priv_rec_edit"> Edit
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="priv_rec_delete"> Delete
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="priv_rec_view" checked> View
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                    <i class="fas fa-save"></i> Save User
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="recordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="recordModalTitle">Add Record</h3>
+                <button class="close-btn" onclick="closeRecordModal()">&times;</button>
+            </div>
+            <form id="recordForm" onsubmit="saveRecord(event)">
+                <input type="hidden" id="recordId">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" class="form-control" id="recTitle" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select class="form-control" id="recType" required onchange="updateRecordFields()">
+                            <option value="incident">Incident</option>
+                            <option value="patrol">Patrol</option>
+                            <option value="visitor">Visitor</option>
+                            <option value="asset">Asset</option>
+                            <option value="employee">Employee</option>
+                            <option value="shift">Shift</option>
+                            <option value="training">Training</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select class="form-control" id="recPriority">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea class="form-control" id="recDescription" rows="3"></textarea>
+                </div>
+                <div id="incidentFields" style="display:none;">
+                    <h4>Incident Details</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select class="form-control" id="incCategory">
+                                <option value="theft">Theft</option>
+                                <option value="vandalism">Vandalism</option>
+                                <option value="unauthorized_access">Unauthorized Access</option>
+                                <option value="safety_hazard">Safety Hazard</option>
+                                <option value="violence">Violence</option>
+                                <option value="fire">Fire</option>
+                                <option value="medical">Medical</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Severity</label>
+                            <select class="form-control" id="incSeverity">
+                                <option value="minor">Minor</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="major">Major</option>
+                                <option value="severe">Severe</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="visitorFields" style="display:none;">
+                    <h4>Visitor Details</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Visitor Name</label>
+                            <input type="text" class="form-control" id="visName">
+                        </div>
+                        <div class="form-group">
+                            <label>Visitor Company</label>
+                            <input type="text" class="form-control" id="visCompany">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Host Name</label>
+                        <input type="text" class="form-control" id="visHost">
+                    </div>
+                    <div class="form-group">
+                        <label>Purpose</label>
+                        <input type="text" class="form-control" id="visPurpose">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                    <i class="fas fa-save"></i> Save Record
+                </button>
+            </form>
+        </div>
+    </div>
+    <script>
+    // NO NEED to declare API_URL - use CONFIG.API_URL from config.js
+    
+    let currentUser = null;
+    let authToken = localStorage.getItem('token');
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!authToken) {
+            window.location.href = 'index.html';
+            return;
+        }
+        loadCurrentUser();
+        loadDashboard();
+    });
+
+    // Navigation
+    function showSection(sectionId) {
+        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        
+        document.getElementById(sectionId).classList.add('active');
+        event.target.classList.add('active');
+        
+        document.getElementById('pageTitle').textContent = 
+            sectionId.charAt(0).toUpperCase() + sectionId.slice(1);
+
+        // Load section data
+        if (sectionId === 'users') loadUsers();
+        if (sectionId === 'records') loadRecords();
+        if (sectionId === 'incidents') loadIncidents();
+        if (sectionId === 'patrols') loadPatrols();
+        if (sectionId === 'visitors') loadVisitors();
+    }
+
+    // API Helper - uses CONFIG.API_URL
+    async function apiCall(endpoint, options = {}) {
+        const response = await fetch(`${CONFIG.API_URL}${endpoint}`, {
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`,
+                ...options.headers
+            }
+        });
+        
+        if (response.status === 401) {
+            logout();
+            return;
+        }
+        
+        return response.json();
+    }
+
+    // Load current user
+    async function loadCurrentUser() {
+        const data = await apiCall('/auth/me');
+        if (data.success) {
+            currentUser = data.data;
+            document.getElementById('currentUserName').textContent = 
+                `${currentUser.firstName} ${currentUser.lastName}`;
+            document.getElementById('currentUserRole').textContent = 
+                currentUser.role.replace('_', ' ').toUpperCase();
+        }
+    }
+
+    // Load dashboard stats
+    async function loadDashboard() {
+        const [users, records] = await Promise.all([
+            apiCall('/users'),
+            apiCall('/records')
+        ]);
+        
+        if (users.success) {
+            document.getElementById('totalUsers').textContent = users.count;
+        }
+        if (records.success) {
+            document.getElementById('totalRecords').textContent = records.count;
+            const open = records.data.filter(r => r.status === 'open').length;
+            document.getElementById('openIncidents').textContent = open;
+        }
+    }
+
+    // ========== USER MANAGEMENT ==========
+
+    async function loadUsers() {
+        const roleFilter = document.getElementById('userRoleFilter').value;
+        let endpoint = '/users';
+        if (roleFilter) endpoint += `?role=${roleFilter}`;
+        
+        const data = await apiCall(endpoint);
+        if (data.success) {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = data.data.map(user => `
+                <tr>
+                    <td>${user.employee_id}</td>
+                    <td>${user.first_name} ${user.last_name}</td>
+                    <td>${user.email}</td>
+                    <td><span class="badge badge-info">${user.role.replace('_', ' ')}</span></td>
+                    <td>Tier ${user.tier}</td>
+                    <td>
+                        <span class="badge ${user.is_active ? 'badge-success' : 'badge-danger'}">
+                            ${user.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="editUser(${user.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    function openUserModal() {
+        document.getElementById('userModal').classList.add('active');
+        document.getElementById('userForm').reset();
+        document.getElementById('userId').value = '';
+        document.getElementById('userModalTitle').textContent = 'Add New User';
+    }
+
+    function closeUserModal() {
+        document.getElementById('userModal').classList.remove('active');
+    }
+
+    function updateTier() {
+        const roleTiers = {
+            'security_guard': 5,
+            'site_supervisor': 4,
+            'finance_officer': 3,
+            'hr_manager': 2,
+            'administrator': 1,
+            'super_admin': 1
+        };
+        const role = document.getElementById('role').value;
+        document.getElementById('tier').value = roleTiers[role] || 5;
+    }
+
+    async function saveUser(e) {
+        e.preventDefault();
+        
+        const userId = document.getElementById('userId').value;
+        const userData = {
+            firstName: document.getElementById('firstName').value,
+            lastName: document.getElementById('lastName').value,
+            email: document.getElementById('email').value,
+            role: document.getElementById('role').value,
+            tier: parseInt(document.getElementById('tier').value),
+            department: document.getElementById('department').value,
+            privileges: {
+                userManagement: {
+                    add: document.getElementById('priv_user_add').checked,
+                    edit: document.getElementById('priv_user_edit').checked,
+                    delete: document.getElementById('priv_user_delete').checked,
+                    view: document.getElementById('priv_user_view').checked
+                },
+                records: {
+                    add: document.getElementById('priv_rec_add').checked,
+                    edit: document.getElementById('priv_rec_edit').checked,
+                    delete: document.getElementById('priv_rec_delete').checked,
+                    view: document.getElementById('priv_rec_view').checked
+                }
+            }
+        };
+        
+        const password = document.getElementById('password').value;
+        if (password) userData.password = password;
+        
+        const endpoint = userId ? `/users/${userId}` : '/users';
+        const method = userId ? 'PATCH' : 'POST';
+        
+        const data = await apiCall(endpoint, {
+            method,
+            body: JSON.stringify(userData)
+        });
+        
+        if (data.success) {
+            showAlert('User saved successfully!', 'success');
+            closeUserModal();
+            loadUsers();
+        } else {
+            showAlert(data.error || 'Error saving user', 'danger');
+        }
+    }
+
+    async function editUser(id) {
+        const data = await apiCall(`/users/${id}`);
+        if (data.success) {
+            const user = data.data;
+            document.getElementById('userId').value = user.id;
+            document.getElementById('firstName').value = user.first_name;
+            document.getElementById('lastName').value = user.last_name;
+            document.getElementById('email').value = user.email;
+            document.getElementById('role').value = user.role;
+            document.getElementById('tier').value = user.tier;
+            document.getElementById('department').value = user.department;
+            
+            // Set privileges
+            if (user.privileges) {
+                document.getElementById('priv_user_add').checked = user.privileges.userManagement?.add;
+                document.getElementById('priv_user_edit').checked = user.privileges.userManagement?.edit;
+                document.getElementById('priv_user_delete').checked = user.privileges.userManagement?.delete;
+                document.getElementById('priv_rec_add').checked = user.privileges.records?.add;
+                document.getElementById('priv_rec_edit').checked = user.privileges.records?.edit;
+                document.getElementById('priv_rec_delete').checked = user.privileges.records?.delete;
+            }
+            
+            document.getElementById('userModalTitle').textContent = 'Edit User';
+            document.getElementById('userModal').classList.add('active');
+        }
+    }
+
+    async function deleteUser(id) {
+        if (!confirm('Are you sure you want to delete this user?')) return;
+        
+        const data = await apiCall(`/users/${id}`, { method: 'DELETE' });
+        if (data.success) {
+            showAlert('User deleted successfully!', 'success');
+            loadUsers();
+        } else {
+            showAlert(data.error || 'Error deleting user', 'danger');
+        }
+    }
+
+    async function deleteAllUsers() {
+        if (!confirm('WARNING: This will delete ALL users. Continue?')) return;
+        
+        const data = await apiCall('/users', { method: 'DELETE' });
+        if (data.success) {
+            showAlert(`Deleted ${data.count} users`, 'success');
+            loadUsers();
+        } else {
+            showAlert(data.error || 'Error deleting users', 'danger');
+        }
+    }
+
+    // ========== RECORDS MANAGEMENT ==========
+
+    async function loadRecords() {
+        const typeFilter = document.getElementById('recordTypeFilter').value;
+        const statusFilter = document.getElementById('recordStatusFilter').value;
+        
+        let endpoint = '/records';
+        const params = [];
+        if (typeFilter) params.push(`type=${typeFilter}`);
+        if (statusFilter) params.push(`status=${statusFilter}`);
+        if (params.length) endpoint += '?' + params.join('&');
+        
+        const data = await apiCall(endpoint);
+        if (data.success) {
+            const tbody = document.getElementById('recordsTableBody');
+            tbody.innerHTML = data.data.map(rec => `
+                <tr>
+                    <td>${rec.id.toString().padStart(6, '0')}</td>
+                    <td>${rec.title}</td>
+                    <td><span class="badge badge-info">${rec.type}</span></td>
+                    <td>
+                        <span class="badge ${getStatusBadgeClass(rec.status)}">
+                            ${rec.status.replace('_', ' ')}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge ${getPriorityBadgeClass(rec.priority)}">
+                            ${rec.priority}
+                        </span>
+                    </td>
+                    <td>${rec.creator_name || 'Unknown'}</td>
+                    <td>${new Date(rec.occurred_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="editRecord(${rec.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteRecord(${rec.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    function getStatusBadgeClass(status) {
+        const classes = {
+            'open': 'badge-warning',
+            'in_progress': 'badge-info',
+            'resolved': 'badge-success',
+            'closed': 'badge-secondary',
+            'archived': 'badge-secondary'
+        };
+        return classes[status] || 'badge-secondary';
+    }
+
+    function getPriorityBadgeClass(priority) {
+        const classes = {
+            'low': 'badge-success',
+            'medium': 'badge-warning',
+            'high': 'badge-danger',
+            'critical': 'badge-danger'
+        };
+        return classes[priority] || 'badge-secondary';
+    }
+
+    function openRecordModal(type = '') {
+        document.getElementById('recordModal').classList.add('active');
+        document.getElementById('recordForm').reset();
+        document.getElementById('recordId').value = '';
+        if (type) document.getElementById('recType').value = type;
+        updateRecordFields();
+    }
+
+    function closeRecordModal() {
+        document.getElementById('recordModal').classList.remove('active');
+    }
+
+    function updateRecordFields() {
+        const type = document.getElementById('recType').value;
+        document.getElementById('incidentFields').style.display = type === 'incident' ? 'block' : 'none';
+        document.getElementById('visitorFields').style.display = type === 'visitor' ? 'block' : 'none';
+    }
+
+    async function saveRecord(e) {
+        e.preventDefault();
+        
+        const recordData = {
+            title: document.getElementById('recTitle').value,
+            type: document.getElementById('recType').value,
+            priority: document.getElementById('recPriority').value,
+            description: document.getElementById('recDescription').value
+        };
+        
+        if (recordData.type === 'incident') {
+            recordData.incidentDetails = {
+                category: document.getElementById('incCategory').value,
+                severity: document.getElementById('incSeverity').value
+            };
+        } else if (recordData.type === 'visitor') {
+            recordData.visitorDetails = {
+                visitorName: document.getElementById('visName').value,
+                visitorCompany: document.getElementById('visCompany').value,
+                hostName: document.getElementById('visHost').value,
+                purpose: document.getElementById('visPurpose').value
+            };
+        }
+        
+        const recordId = document.getElementById('recordId').value;
+        const endpoint = recordId ? `/records/${recordId}` : '/records';
+        const method = recordId ? 'PATCH' : 'POST';
+        
+        const data = await apiCall(endpoint, {
+            method,
+            body: JSON.stringify(recordData)
+        });
+        
+        if (data.success) {
+            showAlert('Record saved successfully!', 'success');
+            closeRecordModal();
+            loadRecords();
+        } else {
+            showAlert(data.error || 'Error saving record', 'danger');
+        }
+    }
+
+    async function deleteRecord(id) {
+        if (!confirm('Are you sure you want to delete this record?')) return;
+        
+        const reason = prompt('Enter reason for deletion:') || 'No reason provided';
+        
+        const data = await apiCall(`/records/${id}`, {
+            method: 'DELETE',
+            body: JSON.stringify({ reason })
+        });
+        
+        if (data.success) {
+            showAlert('Record deleted successfully!', 'success');
+            loadRecords();
+        } else {
+            showAlert(data.error || 'Error deleting record', 'danger');
+        }
+    }
+
+    // Specialized loaders
+    async function loadIncidents() {
+        const data = await apiCall('/records?type=incident');
+        if (data.success) {
+            const tbody = document.getElementById('incidentsTableBody');
+            tbody.innerHTML = data.data.map(inc => `
+                <tr>
+                    <td>${inc.id.toString().padStart(6, '0')}</td>
+                    <td>${inc.category || 'N/A'}</td>
+                    <td>${inc.severity || 'N/A'}</td>
+                    <td>${inc.location_site || 'N/A'}</td>
+                    <td><span class="badge ${getStatusBadgeClass(inc.status)}">${inc.status}</span></td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="editRecord(${inc.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    async function loadPatrols() {
+        const data = await apiCall('/records?type=patrol');
+        document.getElementById('patrolsContent').innerHTML = 
+            `<p>Found ${data.count || 0} patrol records</p>`;
+    }
+
+    async function loadVisitors() {
+        const data = await apiCall('/records?type=visitor');
+        document.getElementById('visitorsContent').innerHTML = 
+            `<p>Found ${data.count || 0} visitor records</p>`;
+    }
+
+    // Utilities
+    function showAlert(message, type) {
+        const alertsDiv = document.getElementById('alerts');
+        alertsDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        setTimeout(() => alertsDiv.innerHTML = '', 5000);
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = 'index.html';
+    }
+
+    // Close modals on outside click
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.classList.remove('active');
+        }
+    }
+</script>   
+</body>
+</html>
 
