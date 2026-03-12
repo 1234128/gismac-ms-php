@@ -1,11 +1,20 @@
 -- Gismac MS Database Schema for MySQL
--- Run this in phpMyAdmin or MySQL CLI
+-- USE THIS IF YOU CAN'T CREATE NEW DATABASES
 
-CREATE DATABASE IF NOT EXISTS gismac_ms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE gismac_ms;
+-- IMPORTANT: Replace 'your_database_name' with your actual database name
+-- Example: USE gismacco_gismac;
 
--- Users Table
-CREATE TABLE users (
+-- Comment out or remove this line if database already exists:
+-- CREATE DATABASE IF NOT EXISTS gismac_ms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Use your existing database (CHANGE THIS!)
+USE your_database_name;
+
+-- ============================================
+-- USERS TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
@@ -33,20 +42,26 @@ CREATE TABLE users (
     INDEX idx_role (role)
 ) ENGINE=InnoDB;
 
--- Privileges Table (separate for flexibility)
-CREATE TABLE user_privileges (
+-- ============================================
+-- USER PRIVILEGES TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS user_privileges (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    resource VARCHAR(50) NOT NULL, -- 'userManagement', 'tierManagement', 'records', 'system'
-    action VARCHAR(50) NOT NULL,   -- 'add', 'edit', 'delete', 'view', 'configure'
+    resource VARCHAR(50) NOT NULL,
+    action VARCHAR(50) NOT NULL,
     allowed BOOLEAN DEFAULT FALSE,
     
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE KEY unique_privilege (user_id, resource, action)
 ) ENGINE=InnoDB;
 
--- Records Table
-CREATE TABLE records (
+-- ============================================
+-- RECORDS TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS records (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
@@ -54,7 +69,7 @@ CREATE TABLE records (
     status ENUM('open', 'in_progress', 'resolved', 'closed', 'archived', 'deleted') DEFAULT 'open',
     priority ENUM('low', 'medium', 'high', 'critical') DEFAULT 'medium',
     
-    -- Location
+    -- Location fields
     location_site VARCHAR(100),
     location_building VARCHAR(100),
     location_floor VARCHAR(50),
@@ -85,8 +100,11 @@ CREATE TABLE records (
     INDEX idx_occurred_at (occurred_at)
 ) ENGINE=InnoDB;
 
--- Record Updates (comments/activity)
-CREATE TABLE record_updates (
+-- ============================================
+-- RECORD UPDATES TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS record_updates (
     id INT AUTO_INCREMENT PRIMARY KEY,
     record_id INT NOT NULL,
     user_id INT NOT NULL,
@@ -98,8 +116,11 @@ CREATE TABLE record_updates (
     FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB;
 
--- Incident Details
-CREATE TABLE incident_details (
+-- ============================================
+-- INCIDENT DETAILS TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS incident_details (
     id INT AUTO_INCREMENT PRIMARY KEY,
     record_id INT NOT NULL,
     category ENUM('theft', 'vandalism', 'unauthorized_access', 'safety_hazard', 'violence', 'fire', 'medical', 'other'),
@@ -112,8 +133,11 @@ CREATE TABLE incident_details (
     FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Patrol Details
-CREATE TABLE patrol_details (
+-- ============================================
+-- PATROL DETAILS TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS patrol_details (
     id INT AUTO_INCREMENT PRIMARY KEY,
     record_id INT NOT NULL,
     route VARCHAR(255),
@@ -125,8 +149,11 @@ CREATE TABLE patrol_details (
     FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Patrol Checkpoints
-CREATE TABLE patrol_checkpoints (
+-- ============================================
+-- PATROL CHECKPOINTS TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS patrol_checkpoints (
     id INT AUTO_INCREMENT PRIMARY KEY,
     patrol_id INT NOT NULL,
     name VARCHAR(100),
@@ -137,8 +164,11 @@ CREATE TABLE patrol_checkpoints (
     FOREIGN KEY (patrol_id) REFERENCES patrol_details(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Visitor Details
-CREATE TABLE visitor_details (
+-- ============================================
+-- VISITOR DETAILS TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS visitor_details (
     id INT AUTO_INCREMENT PRIMARY KEY,
     record_id INT NOT NULL,
     visitor_name VARCHAR(100),
@@ -155,8 +185,11 @@ CREATE TABLE visitor_details (
     FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Visitor Belongings
-CREATE TABLE visitor_belongings (
+-- ============================================
+-- VISITOR BELONGINGS TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS visitor_belongings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     visitor_detail_id INT NOT NULL,
     item VARCHAR(100),
@@ -164,8 +197,11 @@ CREATE TABLE visitor_belongings (
     FOREIGN KEY (visitor_detail_id) REFERENCES visitor_details(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Asset Details
-CREATE TABLE asset_details (
+-- ============================================
+-- ASSET DETAILS TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS asset_details (
     id INT AUTO_INCREMENT PRIMARY KEY,
     record_id INT NOT NULL,
     asset_tag VARCHAR(100),
@@ -180,8 +216,11 @@ CREATE TABLE asset_details (
     FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Attachments
-CREATE TABLE attachments (
+-- ============================================
+-- ATTACHMENTS TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS attachments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     record_id INT NOT NULL,
     filename VARCHAR(255),
@@ -193,8 +232,11 @@ CREATE TABLE attachments (
     FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Involved Persons
-CREATE TABLE involved_persons (
+-- ============================================
+-- INVOLVED PERSONS TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS involved_persons (
     id INT AUTO_INCREMENT PRIMARY KEY,
     record_id INT NOT NULL,
     name VARCHAR(100),
@@ -205,14 +247,16 @@ CREATE TABLE involved_persons (
     FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Insert Default Super Admin
-INSERT INTO users (email, password, first_name, last_name, role, tier, department, is_active) VALUES
-('admin@gismac-ms.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'super_admin', 1, 'IT Administration', TRUE);
+-- ============================================
+-- INSERT DEFAULT DATA
+-- ============================================
 
--- Password is: password (change this!)
+-- Insert Super Admin (Password: password)
+INSERT IGNORE INTO users (id, email, password, first_name, last_name, role, tier, department, is_active) VALUES
+(1, 'admin@gismac-ms.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System', 'Administrator', 'super_admin', 1, 'IT Administration', TRUE);
 
--- Insert default privileges for super admin
-INSERT INTO user_privileges (user_id, resource, action, allowed) VALUES
+-- Insert privileges for super admin
+INSERT IGNORE INTO user_privileges (user_id, resource, action, allowed) VALUES
 (1, 'userManagement', 'add', TRUE),
 (1, 'userManagement', 'edit', TRUE),
 (1, 'userManagement', 'delete', TRUE),
@@ -228,13 +272,13 @@ INSERT INTO user_privileges (user_id, resource, action, allowed) VALUES
 (1, 'system', 'backup', TRUE),
 (1, 'system', 'restore', TRUE);
 
--- Insert sample users (optional)
-INSERT INTO users (email, password, first_name, last_name, role, tier, department, is_active) VALUES
-('hr@gismac.co.ke', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'HR', 'Manager', 'hr_manager', 2, 'Human Resources', TRUE),
-('guard@gismac.co.ke', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Security', 'Guard', 'security_guard', 5, 'Operations', TRUE);
+-- Insert sample users (Password: password)
+INSERT IGNORE INTO users (id, email, password, first_name, last_name, role, tier, department, is_active) VALUES
+(2, 'hr@gismac.co.ke', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'HR', 'Manager', 'hr_manager', 2, 'Human Resources', TRUE),
+(3, 'guard@gismac.co.ke', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Security', 'Guard', 'security_guard', 5, 'Operations', TRUE);
 
 -- Add privileges for sample users
-INSERT INTO user_privileges (user_id, resource, action, allowed) VALUES
+INSERT IGNORE INTO user_privileges (user_id, resource, action, allowed) VALUES
 (2, 'userManagement', 'add', TRUE),
 (2, 'userManagement', 'edit', TRUE),
 (2, 'userManagement', 'view', TRUE),
